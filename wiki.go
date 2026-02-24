@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 type Page struct {
@@ -42,7 +43,9 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
+		return
 	}
+	p.Title = strings.TrimSuffix(p.Title, ".txt")
 	renderTemplate(w, "templates/view", p)
 }
 
@@ -66,7 +69,9 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 
 	p := &Page{Title: title, Body: []byte(body)}
 	p.save()
-	http.Redirect(w, r, "/view/"+title, http.StatusFound)
+	titleWithoutExtension := strings.TrimSuffix(title, ".txt")
+	fmt.Println(titleWithoutExtension, "titleWithoutExtension")
+	http.Redirect(w, r, "/view/"+titleWithoutExtension, http.StatusFound)
 }
 
 func main() {
