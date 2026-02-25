@@ -14,6 +14,12 @@ type Page struct {
 	Body  []byte
 }
 
+var templates = template.Must(template.ParseFiles(
+	"templates/edit.html",
+	"templates/view.html",
+	"templates/not-found.html"),
+)
+
 func (p *Page) save() error {
 	filename := p.Title + ".txt"
 	return os.WriteFile(filename, p.Body, 0600)
@@ -29,15 +35,11 @@ func loadPage(title string) (*Page, error) {
 }
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
-	t, err := template.ParseFiles(tmpl + ".html")
+	err := templates.ExecuteTemplate(w, tmpl+".html", p)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}
-	err = t.Execute(w, p)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -62,8 +64,6 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 
 	p, err := loadPage(title)
 
-	fmt.Println(p, "string")
-
 	if err != nil {
 		p = &Page{Title: title}
 	}
@@ -74,6 +74,8 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 func saveHandler(w http.ResponseWriter, r *http.Request) {
 	title := r.URL.Path[len("/save/"):]
 	body := r.FormValue("body")
+
+	// Here, we will need to check if the file already exist before creating a new one...
 
 	p := &Page{Title: title, Body: []byte(body)}
 	err := p.save()
